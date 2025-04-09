@@ -19,7 +19,7 @@ This is a clean, responsive weather app built using **HTML**, **CSS**, and **Pyt
 
 ## 📷 Preview
 
-![screenshot](images/screenshot.jpg) <!-- Add a real screenshot image here -->
+![screenshot](images/screenshot.png) <!-- Add a real screenshot image here -->
 
 ---
 
