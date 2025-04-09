@@ -1,39 +1,150 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <meta name=""viewport" content="width=device-width, initial-scale=1.0" charset="utf-8">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Weather App</title>
-    <link href='https://fonts.googleapis.com/css?family=Hachi Maru Pop'>
+    <script src="key.js"></script>
+    <!-- Link to PyScript files-->
+    <link rel="stylesheet" href="https://pyscript.net/releases/2025.3.1/core.css" />
+    <script type="module" src="https://pyscript.net/releases/2025.3.1/core.js"></script>
+
+    <!-- Link to custom CSS-->
     <link rel="stylesheet" href="styles.css">   
 </head>
 <body>
-    <div class="card">
-        <div class="search">
-            <input type="text" placeholder="Enter city name" spellcheck="false">
-            <button> <img src="images/search.png"> </button>
-        </div>
-        <div class="weather">
-            <img src="images/sunny.png.png" class="weather-icon">
-            <h1 class="temp">22°c</h1>
-            <h2 class="city">London</h2>
-            <div class="details">
-                <div class="col">
-                    <img src="images/humidity.png">
-                    <div>
-                        <p class="humidity">50%</p>
-                        <p>Humidity</p>
+    <div id="app-background">
+        <div class="card" id="weather-card">
+            <div class="search">
+                <input type="text" placeholder="Enter city name" spellcheck="false" id="city-input">
+                <button py-click="check_weather"> <img src="images/search.png"> </button>
+            </div>
+            <div class="error" id="error">
+                <p>Invalid city name</p>
+            </div>
+            <div class="weather" id="weather-info">
+                <img src="images/sunny.png.png" class="weather-icon" id="weather-icon">
+                <h1 class="temp" id="temp">--°c</h1>
+                <h2 class="city" id="city">--</h2>
+                <div class="details">
+                    <div class="col">
+                        <img src="images/humidity.png">
+                        <div>
+                            <p class="humidity" id="humidity">--%</p>
+                            <p>Humidity</p>
+                        </div>
                     </div>
-                </div>
-                <div class="col">
-                    <img src="images/wind.png">
-                    <div>
-                        <p class="wind">15 km/h</p>
-                        <p>Wind Speed</p>
+                    <div class="col">
+                        <img src="images/wind.png">
+                        <div>
+                            <p class="wind" id="wind">-- km/h</p>
+                            <p>Wind Speed</p>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
+    <py-script>
+        import js
+        import json
+        from pyscript import window
 
+        async def check_weather(*args, **kwargs):
+            api_key = js.window.API_KEY
+
+            city = js.document.getElementById("city-input").value.strip()
+            api_url = f"https://api.openweathermap.org/data/2.5/weather?q={city}&units=metric&appid={api_key}"
+
+            try:
+                # Fetch using JS fetch (compatible with PyScript in browser)
+                response = await js.fetch(api_url)
+                weather_info = js.document.getElementById("weather-info")
+                card = js.document.getElementById("weather-card")
+
+                if response.status == 404:
+                    js.document.getElementById("error").style.display = "block"
+
+                    input_box = js.document.getElementById("city-input")
+
+                    # Reset the class so animation can replay
+                    input_box.classList.remove("shake")
+
+                    # Force browser reflow (this is the secret sauce)
+                    _ = input_box.offsetWidth  # This line does the trick
+
+                    # Re-add the shake class
+                    input_box.classList.add("shake")
+
+                    # Remove after animation ends (optional)
+                    js.setTimeout(lambda: input_box.classList.remove("shake"), 400)
+
+                    weather_info.classList.remove("show")
+                    card.classList.remove("expanded")
+
+                    return
+                else:
+                    js.document.getElementById("error").style.display = "none"
+                    weather_info.classList.add("show")
+                    card.classList.add("expanded")
+
+                    json_data = await response.json()
+                    data = json.loads(js.JSON.stringify(json_data))  # Convert JSObject to Python dict 
+                    
+                    import datetime
+
+                    sunrise = datetime.datetime.fromtimestamp(data["sys"]["sunrise"])
+                    sunset = datetime.datetime.fromtimestamp(data["sys"]["sunset"])
+                    now = datetime.datetime.fromtimestamp(data["dt"])
+
+                    is_day = sunrise <= now <= sunset
+
+                    # Set the background image
+                    bg = js.document.getElementById("app-background")
+
+                    if is_day:
+                        bg.style.backgroundImage = "url('images/day-sky.jpeg')"
+                    else:
+                        bg.style.backgroundImage = "url('images/night-sky.jpeg')"
+
+                    # Update UI
+                    js.document.getElementById("city").textContent = data["name"]
+                    js.document.getElementById("temp").textContent = f"{round(data['main']['temp'])}°c"
+                    js.document.getElementById("humidity").textContent = f"{data['main']['humidity']}%"
+                    js.document.getElementById("wind").textContent = f"{data['wind']['speed']} km/h"
+
+                    js.console.log(data)
+
+                    # Update weather icon
+                    condition = data['weather'][0]['main']
+
+                    # Pick image based on condition
+                    icon = "images/sunny.png.png" #default 
+
+                    if condition == "Clear":
+                        icon = "images/sunny.png.png"
+                    elif condition == "Clouds":
+                        icon = "images/cloudy.png.png"
+                    elif condition == "Rain":
+                        icon = "images/rainy.png.png"
+                    elif condition == "Snow":
+                        icon = "images/snow.png.png"
+                    elif condition == "Thunderstorm":
+                        icon = "images/thunderstorm.png.png"
+                    elif condition == "Drizzle":
+                        icon = "images/drizzle.png.png"
+                    elif condition == "Mist":
+                        icon = "images/mist.png.png"
+
+                    # Set the icon in the img tag
+                    js.document.getElementById("weather-icon").setAttribute("src", icon)
+
+                                    
+            except Exception as e:
+                js.console.error(f"Exception: {e}")
+            
+        window.check_weather = check_weather
+
+    </py-script>
 </body>
 </html>
