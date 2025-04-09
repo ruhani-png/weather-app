@@ -12,7 +12,7 @@ This is a clean, responsive weather app built using **HTML**, **CSS**, and **Pyt
 - 🌬️ Shows temperature, humidity, wind speed
 - ⚠️ Graceful error handling (shakes input + message for invalid cities)
 - 💻 Fully styled with **CSS only** (no inline styling!)
-- 🎯 Press Enter or click the search button to fetch weather
+- 🎯 Click the search button to fetch weather
 - 💡 Expandable card layout — weather data only appears on success
 
 ---
